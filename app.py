@@ -119,52 +119,52 @@ st.markdown("""
 }
 
 /* ========================================================= */
-/* 🔥 CSS MỚI: HỘP CÂU HỎI THÀNH CỬA SỔ POPUP SIÊU ĐẸP 🔥 */
+/* 🔥 GIAO DIỆN POPUP CHO KHỐI CÂU HỎI (BAO GỒM CẢ NÚT BẤM)  */
 /* ========================================================= */
-.question-modal {
+
+/* Nhắm mục tiêu chính xác vào khối chứa điểm đánh dấu id="question-popup-marker" */
+div[data-testid="stVerticalBlock"]:has(#question-popup-marker) {
     border: 6px solid #00B14F !important;
     border-radius: 30px !important;
     background: linear-gradient(145deg, #ffffff, #f0fff4) !important;
     
-    /* Box-shadow khổng lồ tạo hiệu ứng làm tối phần nền xung quanh như Popup thật */
+    /* Làm tối nền xung quanh */
     box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), 0 30px 60px rgba(0, 177, 79, 0.4) !important;
     
     padding: 60px !important;
     position: relative;
-    z-index: 9999; /* Luôn nổi lên trên cùng */
-    transform-origin: center;
-    animation: popInWindow 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    margin-top: 50px;
-    margin-bottom: 50px;
+    z-index: 9999;
+    animation: smoothPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    overflow: hidden; /* Để hiệu ứng xe không tràn ra ngoài góc bo tròn */
 }
 
-@keyframes popInWindow {
-    0% { transform: scale(0.4) translateY(-200px); opacity: 0; }
+@keyframes smoothPop {
+    0% { transform: scale(0.8) translateY(30px); opacity: 0; }
     100% { transform: scale(1) translateY(0); opacity: 1; }
 }
 
-/* Hiệu ứng Đủ các loại xe (GrabBike, Car, Express) chạy lượn lờ trong cửa sổ */
+/* Hiệu ứng Đủ các loại xe chạy dưới đáy Popup */
 .traffic-zone {
     position: absolute;
-    bottom: 5px;
+    bottom: 0px;
     left: 0;
     width: 100%;
-    height: 60px;
+    height: 80px;
     overflow: hidden;
     pointer-events: none;
     opacity: 0.9;
-    border-bottom-left-radius: 25px;
-    border-bottom-right-radius: 25px;
+    z-index: 0;
 }
 
 .xe-c {
     position: absolute;
     font-size: 40px;
-    bottom: 0;
+    bottom: 5px;
     filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
 }
 
-/* Các loại xe với tốc độ, hướng và độ trễ khác nhau */
 .xe-1 { animation: run-right 12s linear infinite; }
 .xe-2 { animation: run-left 15s linear infinite; animation-delay: 2s; font-size: 45px;}
 .xe-3 { animation: run-right 9s linear infinite; animation-delay: 4s; font-size: 35px;}
@@ -180,7 +180,6 @@ st.markdown("""
 }
 /* ========================================================= */
 
-
 .question-text {
     font-size: 32px;
     color: #1a1a1a;
@@ -189,9 +188,11 @@ st.markdown("""
     margin-top: 20px;
     margin-bottom: 50px;
     font-weight: bold;
+    position: relative;
+    z-index: 2; /* Đẩy chữ lên trên hiệu ứng nền nếu có */
 }
 
-/* Trang trí xe chạy nền trang web */
+/* Trang trí xe chạy nền trang web chính */
 .grab-car {
     position: absolute;
     font-size: 40px;
@@ -232,8 +233,10 @@ div.stButton > button {
     color: #00B14F;
     background-color: white;
     transition: 0.3s;
-    height: 60px; /* Làm nút to hơn */
+    height: 60px;
     font-size: 18px !important;
+    position: relative;
+    z-index: 2;
 }
 div.stButton > button:hover {
     background-color: #00B14F;
@@ -257,10 +260,9 @@ div.stButton > button:hover {
 
 # --- HIỆU ỨNG PHÁO HOA & HOA RƠI KHI THẮNG ---
 if st.session_state.game_won:
-    st.balloons() # Hiệu ứng bóng bay/pháo hoa mặc định của Streamlit
+    st.balloons() 
     st.markdown("""
     <style>
-    /* Hiệu ứng hoa rơi */
     @keyframes fall {
         0% { transform: translateY(-10vh) rotate(0deg); opacity: 1;}
         100% { transform: translateY(100vh) rotate(360deg); opacity: 0;}
@@ -274,7 +276,6 @@ if st.session_state.game_won:
     }
     </style>
     <script>
-    // Sinh ra những bông hoa và pháo hoa bằng JS
     const flowers = ['🌸', '🌺', '🌼', '✨', '🛵', '💚'];
     for(let i=0; i<50; i++) {
         let f = document.createElement('div');
@@ -299,7 +300,7 @@ if st.session_state.game_won:
 
 st.markdown('<div class="main-title">🛵 TRÒ CHƠI GIẢI MÃ BÍ MẬT GRAB 💚</div>', unsafe_allow_html=True)
 
-# Khung chứa các ô chữ (Luôn hiển thị)
+# Khung chứa các ô chữ
 st.markdown('<div class="white-container"><div class="grab-car">🛵</div>', unsafe_allow_html=True)
 st.subheader("Bức thông điệp bí ẩn (7 Từ)")
 
@@ -325,7 +326,6 @@ if st.session_state.active_question is None:
         btn_cols = st.columns(7)
         for i, b_col in enumerate(btn_cols):
             with b_col:
-                # Nếu chữ đã mở thì hiển thị dấu check, chưa mở thì hiện số
                 btn_label = f"Câu {i+1}" if not st.session_state.revealed_words[i] else "✅ Đã mở"
                 if st.button(btn_label, key=f"btn_q_{i}", disabled=st.session_state.revealed_words[i]):
                     open_question(i)
@@ -346,58 +346,60 @@ else:
     idx = st.session_state.active_question
     q_data = QUESTIONS[idx]
 
-    # THÊM HTML CHỨA XE CHẠY VÀO TRONG DIV MODAL
-    st.markdown('''
-    <div class="white-container question-modal">
+    # Nhóm TẤT CẢ câu hỏi, nút bấm, thông báo vào 1 container để CSS biến nó thành Modal
+    with st.container():
+        # Điểm đánh dấu ẩn để CSS "tóm" đúng cái container này
+        st.markdown('<div id="question-popup-marker"></div>', unsafe_allow_html=True)
+        
+        # HTML xe chạy nền dưới đáy Modal
+        st.markdown('''
         <div class="traffic-zone">
             <div class="xe-c xe-1">🛵</div>
             <div class="xe-c xe-2">🚗</div>
             <div class="xe-c xe-3">🚕</div>
             <div class="xe-c xe-4">🚚</div>
         </div>
-    ''', unsafe_allow_html=True)
-    
-    st.markdown(f"<h2 style='color: #00B14F; text-align: center; font-size: 35px;'>❓ CÂU HỎI {idx + 1}</h2>", unsafe_allow_html=True)
-    st.markdown(f"<div class='question-text'>{q_data['question']}</div>", unsafe_allow_html=True)
-
-    # TRẠNG THÁI 1: Trả lời ĐÚNG
-    if st.session_state.answered_correctly:
-        st.success("🎉 TUYỆT VỜI! BẠN ĐÃ TRẢ LỜI ĐÚNG. Chữ cái đã được mở!")
-        st.write("---")
+        ''', unsafe_allow_html=True)
         
-        # Nút to để tiếp tục ngay lập tức
-        if st.button("🚀 Tắt câu hỏi & Tiếp tục trò chơi", type="primary", use_container_width=True):
-            continue_game()
-            st.rerun()
+        st.markdown(f"<h2 style='color: #00B14F; text-align: center; font-size: 35px;'>❓ CÂU HỎI {idx + 1}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<div class='question-text'>{q_data['question']}</div>", unsafe_allow_html=True)
+
+        # TRẠNG THÁI 1: Trả lời ĐÚNG
+        if st.session_state.answered_correctly:
+            st.success("🎉 TUYỆT VỜI! BẠN ĐÃ TRẢ LỜI ĐÚNG. Chữ cái đã được mở!")
+            st.write("---")
             
-        # Đợi 3 giây rồi tự động ẩn câu hỏi để tiếp tục trò chơi
-        time.sleep(3)
-        continue_game()
-        st.rerun()
-
-    # TRẠNG THÁI 2: Đang trả lời hoặc trả lời SAI
-    else:
-        # Nếu sai thì hiện cảnh báo
-        if st.session_state.show_error:
-            st.error("❌ Bạn trả lời sai rồi ! Bạn chọn lại đi")
-
-        st.write("Vui lòng chọn 1 đáp án chính xác nhất:")
-
-        # Bố cục 4 đáp án dạng lưới 2x2 siêu to
-        ans_cols = st.columns(2)
-        for i, option in enumerate(q_data['options']):
-            col_idx = i % 2
-            with ans_cols[col_idx]:
-                if st.button(option, key=f"opt_{idx}_{i}", use_container_width=True):
-                    check_answer(idx, option, q_data['answer'])
-                    st.rerun()
-
-        st.write("---")
-        col_space, col_close = st.columns([4, 1])
-        with col_close:
-            # Nút đóng nếu người chơi chưa muốn trả lời ngay
-            if st.button("⬅ Quay lại", key="close_btn", use_container_width=True):
+            # Nút to để tiếp tục ngay lập tức
+            if st.button("🚀 Tắt câu hỏi & Tiếp tục trò chơi", type="primary", use_container_width=True):
                 continue_game()
                 st.rerun()
                 
-    st.markdown('</div>', unsafe_allow_html=True)
+            # Đợi 3 giây rồi tự động ẩn câu hỏi
+            time.sleep(3)
+            continue_game()
+            st.rerun()
+
+        # TRẠNG THÁI 2: Đang trả lời hoặc trả lời SAI
+        else:
+            # Nếu sai thì hiện cảnh báo
+            if st.session_state.show_error:
+                st.error("❌ Bạn trả lời sai rồi ! Bạn chọn lại đi")
+
+            st.write("Vui lòng chọn 1 đáp án chính xác nhất:")
+
+            # Bố cục 4 đáp án dạng lưới 2x2 siêu to
+            ans_cols = st.columns(2)
+            for i, option in enumerate(q_data['options']):
+                col_idx = i % 2
+                with ans_cols[col_idx]:
+                    if st.button(option, key=f"opt_{idx}_{i}", use_container_width=True):
+                        check_answer(idx, option, q_data['answer'])
+                        st.rerun()
+
+            st.write("---")
+            col_space, col_close = st.columns([4, 1])
+            with col_close:
+                # Nút đóng nếu người chơi chưa muốn trả lời ngay
+                if st.button("⬅ Quay lại", key="close_btn", use_container_width=True):
+                    continue_game()
+                    st.rerun()
