@@ -107,7 +107,7 @@ st.markdown("""
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Container nền trắng bo tròn */
+/* Container nền trắng bo tròn mặc định */
 .white-container {
     background-color: #FFFFFF;
     border-radius: 20px;
@@ -118,29 +118,80 @@ st.markdown("""
     overflow: hidden;
 }
 
-/* Hộp câu hỏi bật lên to giữa màn hình */
+/* ========================================================= */
+/* 🔥 CSS MỚI: HỘP CÂU HỎI THÀNH CỬA SỔ POPUP SIÊU ĐẸP 🔥 */
+/* ========================================================= */
 .question-modal {
-    border: 4px solid #00B14F !important;
-    box-shadow: 0 15px 35px rgba(0,177,79,0.2) !important;
-    padding: 40px !important;
-    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-}
-@keyframes popIn {
-    0% { transform: scale(0.9); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
+    border: 6px solid #00B14F !important;
+    border-radius: 30px !important;
+    background: linear-gradient(145deg, #ffffff, #f0fff4) !important;
+    
+    /* Box-shadow khổng lồ tạo hiệu ứng làm tối phần nền xung quanh như Popup thật */
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.75), 0 30px 60px rgba(0, 177, 79, 0.4) !important;
+    
+    padding: 60px !important;
+    position: relative;
+    z-index: 9999; /* Luôn nổi lên trên cùng */
+    transform-origin: center;
+    animation: popInWindow 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    margin-top: 50px;
+    margin-bottom: 50px;
 }
 
+@keyframes popInWindow {
+    0% { transform: scale(0.4) translateY(-200px); opacity: 0; }
+    100% { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+/* Hiệu ứng Đủ các loại xe (GrabBike, Car, Express) chạy lượn lờ trong cửa sổ */
+.traffic-zone {
+    position: absolute;
+    bottom: 5px;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.9;
+    border-bottom-left-radius: 25px;
+    border-bottom-right-radius: 25px;
+}
+
+.xe-c {
+    position: absolute;
+    font-size: 40px;
+    bottom: 0;
+    filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));
+}
+
+/* Các loại xe với tốc độ, hướng và độ trễ khác nhau */
+.xe-1 { animation: run-right 12s linear infinite; }
+.xe-2 { animation: run-left 15s linear infinite; animation-delay: 2s; font-size: 45px;}
+.xe-3 { animation: run-right 9s linear infinite; animation-delay: 4s; font-size: 35px;}
+.xe-4 { animation: run-left 11s linear infinite; animation-delay: 7s; font-size: 38px;}
+
+@keyframes run-right {
+    0% { left: -100px; transform: scaleX(1); }
+    100% { left: 110%; transform: scaleX(1); }
+}
+@keyframes run-left {
+    0% { right: -100px; transform: scaleX(-1); }
+    100% { right: 110%; transform: scaleX(-1); }
+}
+/* ========================================================= */
+
+
 .question-text {
-    font-size: 28px;
+    font-size: 32px;
     color: #1a1a1a;
     text-align: center;
     line-height: 1.5;
     margin-top: 20px;
-    margin-bottom: 40px;
-    font-weight: 600;
+    margin-bottom: 50px;
+    font-weight: bold;
 }
 
-/* Trang trí xe Grab bay lượn */
+/* Trang trí xe chạy nền trang web */
 .grab-car {
     position: absolute;
     font-size: 40px;
@@ -188,11 +239,7 @@ div.stButton > button:hover {
     background-color: #00B14F;
     color: white;
     transform: translateY(-2px);
-}
-
-/* Style riêng cho nút màu xanh lá (Primary) */
-button[data-baseweb="button"]:has(div[data-testid="stMarkdownContainer"]) {
-/* Bắt lấy các nút được Streamlit mặc định */
+    box-shadow: 0 5px 15px rgba(0,177,79,0.3);
 }
 
 /* Tiêu đề */
@@ -295,12 +342,22 @@ if st.session_state.active_question is None:
         st.markdown('</div>', unsafe_allow_html=True)
 
 else:
-    # ---------------- HIỂN THỊ CÂU HỎI TO GIỮA MÀN HÌNH ----------------
+    # ---------------- HIỂN THỊ CÂU HỎI TO GIỮA MÀN HÌNH NHƯ POPUP CỬA SỔ ----------------
     idx = st.session_state.active_question
     q_data = QUESTIONS[idx]
 
-    st.markdown('<div class="white-container question-modal">', unsafe_allow_html=True)
-    st.markdown(f"<h2 style='color: #00B14F; text-align: center;'>❓ CÂU HỎI {idx + 1}</h2>", unsafe_allow_html=True)
+    # THÊM HTML CHỨA XE CHẠY VÀO TRONG DIV MODAL
+    st.markdown('''
+    <div class="white-container question-modal">
+        <div class="traffic-zone">
+            <div class="xe-c xe-1">🛵</div>
+            <div class="xe-c xe-2">🚗</div>
+            <div class="xe-c xe-3">🚕</div>
+            <div class="xe-c xe-4">🚚</div>
+        </div>
+    ''', unsafe_allow_html=True)
+    
+    st.markdown(f"<h2 style='color: #00B14F; text-align: center; font-size: 35px;'>❓ CÂU HỎI {idx + 1}</h2>", unsafe_allow_html=True)
     st.markdown(f"<div class='question-text'>{q_data['question']}</div>", unsafe_allow_html=True)
 
     # TRẠNG THÁI 1: Trả lời ĐÚNG
