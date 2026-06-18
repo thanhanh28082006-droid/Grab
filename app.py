@@ -85,13 +85,11 @@ def check_answer(q_idx, selected_option, correct_option):
     else:
         st.toast('😢 Sai rồi! Hãy thử lại hoặc chọn câu khác nhé.', icon='❌')
 
-def guess_all(guess):
-    if guess.strip().upper() == TARGET_PHRASE.upper():
-        st.session_state.revealed_words = [True] * 7
-        st.session_state.game_won = True
-        st.toast('🏆 Xuất sắc! Bạn đã đoán đúng toàn bộ!', icon='🌟')
-    else:
-        st.error('Sai rồi! Câu thần chú chưa chính xác.')
+# Hàm mới: Mở toàn bộ không cần nhập
+def reveal_all():
+    st.session_state.revealed_words = [True] * 7
+    st.session_state.game_won = True
+    st.toast('🏆 Xuất sắc! Mọi bí ẩn đã được giải mã!', icon='🌟')
 
 # --- CSS TÙY CHỈNH (Giao diện đẹp, bo tròn, màu Grab) ---
 st.markdown("""
@@ -176,7 +174,7 @@ st.markdown("""
 
 # --- HIỆU ỨNG PHÁO HOA & HOA RƠI KHI THẮNG ---
 if st.session_state.game_won:
-    st.balloons() # Hiệu ứng bóng bay mặc định của Streamlit
+    st.balloons() # Hiệu ứng bóng bay/pháo hoa mặc định của Streamlit
     st.markdown("""
     <style>
     /* Hiệu ứng hoa rơi */
@@ -250,10 +248,12 @@ with col_left:
 
 with col_right:
     st.markdown('<div class="white-container">', unsafe_allow_html=True)
-    st.subheader("🚀 Đoán toàn bộ")
-    guess_text = st.text_input("Nhập đầy đủ câu (có dấu):", placeholder="Nhập câu trả lời...")
-    if st.button("Xác nhận đoán", use_container_width=True):
-        guess_all(guess_text)
+    st.subheader("🚀 Mở toàn bộ")
+    st.write("Nhấn nút dưới đây nếu bạn muốn lật mở tất cả ô chữ!")
+    # Nút mới: Không cần nhập text nữa
+    if st.button("Đoán đúng toàn bộ", use_container_width=True):
+        reveal_all()
+        st.rerun() # Tải lại trang ngay lập tức để hiện pháo hoa
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Khung hiển thị câu hỏi (Chỉ hiện khi click vào số)
