@@ -66,26 +66,33 @@ if 'active_question' not in st.session_state:
     st.session_state.active_question = None
 if 'game_won' not in st.session_state:
     st.session_state.game_won = False
+if 'answered_correctly' not in st.session_state:
+    st.session_state.answered_correctly = False
+if 'show_error' not in st.session_state:
+    st.session_state.show_error = False
 
 # --- HÀM XỬ LÝ SỰ KIỆN ---
 def open_question(idx):
     st.session_state.active_question = idx
+    st.session_state.answered_correctly = False
+    st.session_state.show_error = False
 
-def close_question():
+def continue_game():
     st.session_state.active_question = None
+    st.session_state.answered_correctly = False
+    st.session_state.show_error = False
 
 def check_answer(q_idx, selected_option, correct_option):
     if selected_option == correct_option:
+        st.session_state.answered_correctly = True
+        st.session_state.show_error = False
         st.session_state.revealed_words[q_idx] = True
-        st.session_state.active_question = None
-        st.toast('🎉 Trả lời chính xác! Tuyệt vời!', icon='💚')
         # Kiểm tra xem đã mở hết chưa
         if all(st.session_state.revealed_words):
             st.session_state.game_won = True
     else:
-        st.toast('😢 Sai rồi! Hãy thử lại hoặc chọn câu khác nhé.', icon='❌')
+        st.session_state.show_error = True
 
-# Hàm mới: Mở toàn bộ không cần nhập
 def reveal_all():
     st.session_state.revealed_words = [True] * 7
     st.session_state.game_won = True
@@ -111,6 +118,28 @@ st.markdown("""
         overflow: hidden;
     }
     
+    /* Hộp câu hỏi bật lên to giữa màn hình */
+    .question-modal {
+        border: 4px solid #00B14F !important;
+        box-shadow: 0 15px 35px rgba(0,177,79,0.2) !important;
+        padding: 40px !important;
+        animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+    @keyframes popIn {
+        0% { transform: scale(0.9); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .question-text {
+        font-size: 28px;
+        color: #1a1a1a;
+        text-align: center;
+        line-height: 1.5;
+        margin-top: 20px;
+        margin-bottom: 40px;
+        font-weight: 600;
+    }
+
     /* Trang trí xe Grab bay lượn */
     .grab-car {
         position: absolute;
@@ -144,19 +173,26 @@ st.markdown("""
         font-size: 30px;
     }
     
-    /* Style cho nút chọn câu hỏi */
+    /* Style cho các nút bấm */
     div.stButton > button {
-        border-radius: 25px;
+        border-radius: 15px;
         font-weight: bold;
         border: 2px solid #00B14F;
         color: #00B14F;
         background-color: white;
         transition: 0.3s;
+        height: 60px; /* Làm nút to hơn */
+        font-size: 18px !important;
     }
     div.stButton > button:hover {
         background-color: #00B14F;
         color: white;
         transform: translateY(-2px);
+    }
+    
+    /* Style riêng cho nút màu xanh lá (Primary) */
+    button[data-baseweb="button"]:has(div[data-testid="stMarkdownContainer"]) {
+        /* Bắt lấy các nút được Streamlit mặc định */
     }
     
     /* Tiêu đề */
@@ -216,7 +252,7 @@ if st.session_state.game_won:
 
 st.markdown('<div class="main-title">🛵 TRÒ CHƠI GIẢI MÃ BÍ MẬT GRAB 💚</div>', unsafe_allow_html=True)
 
-# Khung chứa các ô chữ
+# Khung chứa các ô chữ (Luôn hiển thị)
 st.markdown('<div class="white-container"><div class="grab-car">🛵</div>', unsafe_allow_html=True)
 st.subheader("Bức thông điệp bí ẩn (7 Từ)")
 
@@ -231,54 +267,74 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 st.write("---")
 
-# Khung chọn câu hỏi & đoán toàn bộ
-col_left, col_right = st.columns([2, 1])
+# KIỂM TRA TRẠNG THÁI: Hiển thị bảng chọn CÂU HỎI hay đang hiển thị 1 CÂU HỎI TO?
+if st.session_state.active_question is None:
+    # ---------------- BẢNG CHỌN CÂU HỎI ----------------
+    col_left, col_right = st.columns([2, 1])
 
-with col_left:
-    st.markdown('<div class="white-container">', unsafe_allow_html=True)
-    st.subheader("🎯 Chọn câu hỏi để giải mã")
-    btn_cols = st.columns(7)
-    for i, b_col in enumerate(btn_cols):
-        with b_col:
-            # Nếu chữ đã mở thì hiển thị dấu check, chưa mở thì hiện số
-            btn_label = f"Câu {i+1}" if not st.session_state.revealed_words[i] else "✅ Đã mở"
-            if st.button(btn_label, key=f"btn_q_{i}", disabled=st.session_state.revealed_words[i]):
-                open_question(i)
-    st.markdown('</div>', unsafe_allow_html=True)
+    with col_left:
+        st.markdown('<div class="white-container">', unsafe_allow_html=True)
+        st.subheader("🎯 Chọn câu hỏi để giải mã")
+        btn_cols = st.columns(7)
+        for i, b_col in enumerate(btn_cols):
+            with b_col:
+                # Nếu chữ đã mở thì hiển thị dấu check, chưa mở thì hiện số
+                btn_label = f"Câu {i+1}" if not st.session_state.revealed_words[i] else "✅ Đã mở"
+                if st.button(btn_label, key=f"btn_q_{i}", disabled=st.session_state.revealed_words[i]):
+                    open_question(i)
+                    st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-with col_right:
-    st.markdown('<div class="white-container">', unsafe_allow_html=True)
-    st.subheader("🚀 Mở toàn bộ")
-    st.write("Nhấn nút dưới đây nếu bạn muốn lật mở tất cả ô chữ!")
-    # Nút mới: Không cần nhập text nữa
-    if st.button("Đoán đúng toàn bộ", use_container_width=True):
-        reveal_all()
-        st.rerun() # Tải lại trang ngay lập tức để hiện pháo hoa
-    st.markdown('</div>', unsafe_allow_html=True)
+    with col_right:
+        st.markdown('<div class="white-container">', unsafe_allow_html=True)
+        st.subheader("🚀 Mở toàn bộ")
+        st.write("Nhấn nút dưới đây nếu bạn muốn lật mở tất cả ô chữ!")
+        if st.button("Đoán đúng toàn bộ", use_container_width=True):
+            reveal_all()
+            st.rerun()
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# Khung hiển thị câu hỏi (Chỉ hiện khi click vào số)
-if st.session_state.active_question is not None:
+else:
+    # ---------------- HIỂN THỊ CÂU HỎI TO GIỮA MÀN HÌNH ----------------
     idx = st.session_state.active_question
     q_data = QUESTIONS[idx]
     
-    st.markdown('<div class="white-container" style="border: 3px solid #00B14F;">', unsafe_allow_html=True)
-    col_q, col_close = st.columns([9, 1])
-    with col_q:
-        st.markdown(f"<h3 style='color: #009140;'>❓ Câu hỏi {idx + 1}: {q_data['question']}</h3>", unsafe_allow_html=True)
-    with col_close:
-        if st.button("✖ Đóng", key="close_btn"):
-            close_question()
-            st.rerun()
+    st.markdown('<div class="white-container question-modal">', unsafe_allow_html=True)
+    st.markdown(f"<h2 style='color: #00B14F; text-align: center;'>❓ CÂU HỎI {idx + 1}</h2>", unsafe_allow_html=True)
+    st.markdown(f"<div class='question-text'>{q_data['question']}</div>", unsafe_allow_html=True)
 
-    st.write("Chọn đáp án đúng nhất:")
-    
-    # Bố cục 4 đáp án dạng lưới 2x2
-    ans_cols = st.columns(2)
-    for i, option in enumerate(q_data['options']):
-        col_idx = i % 2
-        with ans_cols[col_idx]:
-            if st.button(option, key=f"opt_{idx}_{i}", use_container_width=True):
-                check_answer(idx, option, q_data['answer'])
+    # TRẠNG THÁI 1: Trả lời ĐÚNG
+    if st.session_state.answered_correctly:
+        st.success("🎉 TUYỆT VỜI! BẠN ĐÃ TRẢ LỜI ĐÚNG. Chữ cái đã được mở!")
+        st.write("---")
+        # Nút to để tiếp tục
+        if st.button("🚀 Tắt câu hỏi & Tiếp tục trò chơi", type="primary", use_container_width=True):
+            continue_game()
+            st.rerun()
+            
+    # TRẠNG THÁI 2: Đang trả lời hoặc trả lời SAI
+    else:
+        # Nếu sai thì hiện cảnh báo
+        if st.session_state.show_error:
+            st.error("❌ Bạn trả lời sai rồi! Bạn chọn lại đi.")
+            
+        st.write("Vui lòng chọn 1 đáp án chính xác nhất:")
+        
+        # Bố cục 4 đáp án dạng lưới 2x2 siêu to
+        ans_cols = st.columns(2)
+        for i, option in enumerate(q_data['options']):
+            col_idx = i % 2
+            with ans_cols[col_idx]:
+                if st.button(option, key=f"opt_{idx}_{i}", use_container_width=True):
+                    check_answer(idx, option, q_data['answer'])
+                    st.rerun()
+                    
+        st.write("---")
+        col_space, col_close = st.columns([4, 1])
+        with col_close:
+            # Nút đóng nếu người chơi chưa muốn trả lời ngay
+            if st.button("⬅ Quay lại", key="close_btn", use_container_width=True):
+                continue_game()
                 st.rerun()
                 
     st.markdown('</div>', unsafe_allow_html=True)
